@@ -1,0 +1,150 @@
+clc; clf; close all; clear all;
+
+syms q1 q2 q3
+
+% Définition des paramètres Denavit-Hartenberg
+sigma = sym([0, 0, 0]);
+a = sym([150 250 220]);
+alpha = sym([pi/2 0 0]);
+r = sym([350 0 0]);
+theta = sym('q',[1 3]);
+
+% On crée les matrices des passages homogènes
+T_homo = sym(zeros(4,4,3));
+for i=[1 2 3]
+    T_homo(:,:,i) = subs([cos(theta(i)) -cos(alpha(i))*sin(theta(i)) ...
+                          sin(alpha(i))*sin(theta(i)) a(i)*cos(theta(i));
+	                      sin(theta(i)) cos(alpha(i))*cos(theta(i)) ...
+                          -sin(alpha(i))*cos(theta(i)) a(i)*sin(theta(i));
+	                      0 sin(alpha(i)) cos(alpha(i)) r(i);
+                          0 0 0 1]);
+end
+T_1_2 = T_homo(:,:,1);
+T_2_3 = T_homo(:,:,2);
+T_3_4 = T_homo(:,:,3);
+
+T_2_4 = T_2_3 * T_3_4;
+T_2_4 = simplify(T_2_4);
+
+% Matrice de passage homogène entre les repères 1 et 4
+T_1_4 = simplify(T_1_2 * T_2_4);
+
+% Calcul des variables articulaires initiales q1i, q2i, q3i
+x = T_1_4(1,4);
+y = T_1_4(2,4);
+z = T_1_4(3,4);
+
+[q1i,q2i,q3i] = solve(x== 370, y==-200, z==600,q1,q2,q3,"Real",true);
+q1i=eval(q1i);
+q2i=eval(q2i);
+q3i=eval(q3i);
+
+% On trouve qu'il y a deux solutions des variables articulaires 
+% initiales, on garde les deux pour plus tard en déduire la meilleure
+Qcas1_i = [q1i(1), q2i(1), q3i(1)];
+Qcas2_i = [q1i(2), q2i(2), q2i(2)];
+
+% Point de départ (position 12)
+XYZ_i = [370, -200, 600];
+% Vitesse du bras (100mm/s dans direction (-z) )
+V_xyz=[0;0;-100];
+% Point final (position 13)
+XYZ_f = [370, -200, 500];
+
+% Vitesse du point O4 en fonction des vitesses Vq1, Vq2, Vq3
+J_i=jacobian([x,y,z],[q1,q2,q3]);
+
+% VQ_i contient les vitesses initiales (t=0) articulaires Vqi1,Vqi2,Vqi3
+VQ_i = J_i\V_xyz;
+% Pour cas 1:
+q1 = Qcas1_i(1); q2 = Qcas1_i(2); q3 = Qcas1_i(3);
+VQ_icas1 = eval(subs(VQ_i));
+%Pour cas 2:
+q1 = Qcas2_i(1); q2 = Qcas2_i(2); q3 = Qcas2_i(3);
+VQ_icas2 = eval(subs(VQ_i));
+
+XYZ = XYZ_i;
+Qcas1 = Qcas1_i;
+VQ1 = VQ_icas1';
+dt = 0.001; % en millisecondes
+t = 0; % Initialisation du temps
+while t<1000
+    XYZ_Ajouter = []; Qcas1_Ajouter = [];
+    t = t+dt*1000;
+    for i = 1:3
+        XYZ_Ajouter = [XYZ_Ajouter, XYZ(t,i) + dt*V_xyz(i)];
+        Qcas1_Ajouter = [Qcas1_Ajouter, Qcas1(t,i) + dt*VQ1(t,i)];
+    end
+    XYZ = [XYZ; XYZ_Ajouter];
+    Qcas1 = [Qcas1; Qcas1_Ajouter];
+    q1 = Qcas1(t+1,1); q2 = Qcas1(t+1,2); q3 = Qcas1(t+1,3);
+    VQ1 = [VQ1;eval(subs(VQ_i))'];
+end
+
+Qcas2 = Qcas2_i;
+VQ2 = VQ_icas2';
+dt = 0.001; % en millisecondes
+t = 0; % Initialisation du temps
+while t<1000
+    Qcas2_Ajouter = [];
+    t = t+dt*1000;
+    for i = 1:3
+        Qcas2_Ajouter = [Qcas2_Ajouter, Qcas2(t,i) + dt*VQ2(t,i)];
+    end
+    Qcas2 = [Qcas2; Qcas2_Ajouter];
+    q1 = Qcas2(t+1,1); q2 = Qcas2(t+1,2); q3 = Qcas2(t+1,3);
+    VQ2 = [VQ2;eval(subs(VQ_i))'];
+end
+
+figure(1)
+plot(XYZ(:,3))
+title("Position du bras en z en fonction du temps")
+xlabel("Temps (t) [s]")
+ylabel("Position en z [mm]")
+
+figure(2)
+plot(Qcas1(:,1),'-b','DisplayName','q1')
+hold on 
+plot(Qcas1(:,2),'-g','DisplayName','q2')
+hold on
+plot(Qcas1(:,3),'-r','DisplayName','q3')
+hold on
+title("CAS 1.Position du bras en termes des articulaires q1, q2, q3")
+xlabel("Temps (t) [s]")
+ylabel("Angle (\theta) [rad]")
+
+figure(3)
+plot(Qcas2(:,1),'-b','DisplayName','q1')
+hold on
+plot(Qcas2(:,2),'-g','DisplayName','q2')
+hold on
+plot(Qcas2(:,3),'-r','DisplayName','q3')
+title("CAS 2. Position du bras en termes des articulaires q1, q2, q3")
+xlabel("Temps (t) [s]")
+ylabel("Angle (\theta) [rad]")
+legend
+
+figure(4)
+plot(VQ1(:,1),'-b','DisplayName','dq1/dt')
+hold on 
+plot(VQ1(:,2),'-g','DisplayName','dq2/dt')
+hold on
+plot(VQ1(:,3),'-r','DisplayName','dq3/dt')
+hold on
+title("CAS 1. Vitesse articulaire du bras en termes de q1, q2, q3")
+xlabel("Temps (t) [s]")
+ylabel("Vitesse angulaire (d\theta/dt) [rad.s^{-1}]")
+legend
+
+
+figure(5)
+plot(VQ2(:,1),'-b','DisplayName','dq1/dt')
+hold on
+plot(VQ2(:,2),'-g','DisplayName','dq2/dt')
+hold on
+plot(VQ2(:,3),'-r','DisplayName','dq3/dt')
+title("CAS 2. Vitesse articulaire du bras en termes de q1, q2, q3")
+xlabel("Temps (t) [s]")
+ylabel("Vitesse angulaire (d\theta/dt) [rad.s^{-1}]")
+legend
+
