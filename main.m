@@ -96,13 +96,25 @@ while t<1000
     VQ2 = [VQ2;eval(subs(VQ_i))'];
 end
 
+q1Catia = xlsread('Resultats_Catia_Cas_Horizontale', 'Q2:Q82');
+q2Catia = xlsread('Resultats_Catia_Cas_Horizontale', 'R2:R82');
+q3Catia = xlsread('Resultats_Catia_Cas_Horizontale', 'S2:S82');
+
+Vq1Catia = xlsread('Resultats_Catia_Cas_Horizontale', 'F2:F82');
+Vq2Catia = xlsread('Resultats_Catia_Cas_Horizontale', 'T2:T82');
+Vq3Catia = xlsread('Resultats_Catia_Cas_Horizontale', 'U2:U82');
+
+tempsCatia = xlsread('Resultats_Catia_Cas_Horizontale','A2:A82')*1000;
+
 figure(1)
 plot(XYZ(:,3))
 title("Position du bras en z en fonction du temps")
-xlabel("Temps (t) [s]")
+xlabel("Temps (t) [ms]")
 ylabel("Position en z [mm]")
 
+
 figure(2)
+subplot(1,2,1)
 plot(Qcas1(:,1),'-b','DisplayName','q1')
 hold on 
 plot(Qcas1(:,2),'-g','DisplayName','q2')
@@ -110,21 +122,11 @@ hold on
 plot(Qcas1(:,3),'-r','DisplayName','q3')
 hold on
 title("CAS 1.Position du bras en termes des articulaires q1, q2, q3")
-xlabel("Temps (t) [s]")
+xlabel("Temps (t) [ms]")
 ylabel("Angle (\theta) [rad]")
 
-figure(3)
-plot(Qcas2(:,1),'-b','DisplayName','q1')
-hold on
-plot(Qcas2(:,2),'-g','DisplayName','q2')
-hold on
-plot(Qcas2(:,3),'-r','DisplayName','q3')
-title("CAS 2. Position du bras en termes des articulaires q1, q2, q3")
-xlabel("Temps (t) [s]")
-ylabel("Angle (\theta) [rad]")
-legend
 
-figure(4)
+subplot(1,2,2)
 plot(VQ1(:,1),'-b','DisplayName','dq1/dt')
 hold on 
 plot(VQ1(:,2),'-g','DisplayName','dq2/dt')
@@ -132,19 +134,45 @@ hold on
 plot(VQ1(:,3),'-r','DisplayName','dq3/dt')
 hold on
 title("CAS 1. Vitesse articulaire du bras en termes de q1, q2, q3")
-xlabel("Temps (t) [s]")
+xlabel("Temps (t) [ms]")
 ylabel("Vitesse angulaire (d\theta/dt) [rad.s^{-1}]")
 legend
 
 
-figure(5)
+figure(3)
+subplot(1,2,1)
+plot(Qcas2(:,1),'-b','DisplayName','q1')
+hold on
+plot(Qcas2(:,2),'-g','DisplayName','q2')
+hold on
+plot(Qcas2(:,3),'-r','DisplayName','q3')
+hold on
+plot(tempsCatia,q1Catia,'--b','DisplayName','q1(Catia)')
+hold on 
+plot(tempsCatia,q2Catia,'--g','DisplayName','q2(Catia)')
+hold on
+plot(tempsCatia,q3Catia,'--r','DisplayName','q3(Catia)')
+hold on
+title("CAS 2. Position du bras en termes des articulaires q1, q2, q3")
+xlabel("Temps (t) [ms]")
+ylabel("Angle (\theta) [rad]")
+
+
+subplot(1,2,2)
 plot(VQ2(:,1),'-b','DisplayName','dq1/dt')
 hold on
 plot(VQ2(:,2),'-g','DisplayName','dq2/dt')
 hold on
 plot(VQ2(:,3),'-r','DisplayName','dq3/dt')
 title("CAS 2. Vitesse articulaire du bras en termes de q1, q2, q3")
-xlabel("Temps (t) [s]")
+hold on
+plot(tempsCatia,Vq1Catia,'--b','DisplayName','dq1/dt(Catia)')
+hold on 
+plot(tempsCatia,Vq2Catia,'--g','DisplayName','dq2/dt(Catia)')
+hold on
+plot(tempsCatia,Vq3Catia,'--r','DisplayName','dq3/dt(Catia)')
+xlabel("Temps (t) [ms]")
 ylabel("Vitesse angulaire (d\theta/dt) [rad.s^{-1}]")
 legend
+
 
