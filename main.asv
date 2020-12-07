@@ -151,9 +151,9 @@ plot(VQ1(:,3),'-r','DisplayName','dq3/dt')
 hold on
 plot(tempsCatia2,Vq1Catia2,'--b','DisplayName','dq1/dt(Catia)')
 hold on 
-plot(tempsCatia2,Vq2Catia2,'--g','DisplayName','dq2/dt(Catia)')
+plot(tempsCatia,Vq2Catia2,'--g','DisplayName','dq2/dt(Catia)')
 hold on
-plot(tempsCatia2,Vq3Catia2,'--r','DisplayName','dq3/dt(Catia)')
+plot(tempsCatia,Vq3Catia2,'--r','DisplayName','dq3/dt(Catia)')
 hold on
 title("CAS 1. Vitesse articulaire du bras en termes de q1, q2, q3")
 xlabel("Temps (t) [ms]")
